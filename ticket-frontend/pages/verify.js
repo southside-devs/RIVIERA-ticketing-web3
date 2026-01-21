@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { ethers } from "ethers";
 
@@ -8,6 +8,7 @@ const ABI = ["function used(uint256) view returns (bool)"];
 export default function Verify() {
   const [ticketId, setTicketId] = useState("");
   const [status, setStatus] = useState("Scan a ticket QR");
+  const wasUnused = useRef(false);
 
   // Start scanner
   useEffect(() => {
@@ -24,9 +25,9 @@ export default function Verify() {
           if (id) {
             setTicketId(id);
             setStatus("⏳ Waiting for user approval...");
+            wasUnused.current = true;
             scanner.stop();
 
-            // 🔁 AUTO OPEN USER PAGE
             window.open(`/user-verify?tokenId=${id}`, "_blank");
           }
         } catch {}
@@ -44,24 +45,22 @@ export default function Verify() {
   }, [ticketId]);
 
   async function checkStatus() {
-    if (!ticketId) return;
-
     const provider = new ethers.JsonRpcProvider(
       process.env.NEXT_PUBLIC_RPC_URL
     );
 
     const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider);
-
     const used = await contract.used(ticketId);
 
-    if (used) {
+    if (used && wasUnused.current) {
+      setStatus("✅ Entry Allowed");
+      wasUnused.current = false;
+    } else if (used && !wasUnused.current) {
       setStatus("❌ Ticket already used");
     } else {
       setStatus("⏳ Waiting for user approval...");
     }
   }
-
-  const isBlocked = status.includes("used");
 
   return (
     <div style={styles.page}>

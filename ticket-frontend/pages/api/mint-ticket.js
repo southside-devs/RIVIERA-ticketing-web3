@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import { getWallet } from "./_walletStore";
 
-const CONTRACT_ADDRESS = "0x3eDe913DbB5aB11e2386Bd0b192Ae3a725d57f10";
+const CONTRACT_ADDRESS = "0x63b1C9799ec32F314c07977Df7ebe97ef0016f53";
 
 const ABI = [
   "function mintTicket(address to)",
